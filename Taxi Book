@@ -1,0 +1,143 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class Taxi {
+public:
+    static int taxiId;
+    int tid;
+    char currSpot;
+    int freeTime;
+    int earnings;
+    vector<string> trips;
+
+    Taxi() {
+        tid = taxiId++;
+        currSpot = 'A';
+        freeTime = 6;
+        earnings = 0;
+        trips = {};
+    }
+
+    void setDetails(char _curspot, int _freetime, int _earnings, string detail) {
+        currSpot = _curspot;
+        freeTime = _freetime;
+        earnings = _earnings;
+        trips.push_back(detail);
+    }
+
+    void taxiDetails() {
+        cout << "Trips made by taxiId " << tid << " are :" << endl;
+        cout << "taxiId" << "  " << "passengerId" << "  " << "pickpoint" << " " << "droppoint" << " " << "picktime" << " " << "earnings" << endl;
+        for (string temp : trips) {
+            cout << temp << "  ";
+        }
+        cout << endl;
+    }
+};
+
+int Taxi::taxiId = 0;
+
+class Booking {
+public:
+    int pid;
+
+    Booking(int passengerId) {
+        pid = passengerId;
+    }
+
+    vector<Taxi*> getFreetaxies(int ptime, char ppoint, char dpoint, vector<Taxi>& taxies) {
+        vector<Taxi*> ans;
+        for (auto& it : taxies) {
+            if (it.freeTime <= ptime) {
+                if ((abs(it.currSpot - ppoint) + it.freeTime) <= ptime) {
+                    ans.push_back(&it);
+                }
+            }
+        }
+        return ans;
+    }
+
+    void bookTaxi(char ppoint, char dpoint, int ptime, vector<Taxi*>& freeTaxies) {
+        int mini = 999;
+        char nextSpot = 'Z';
+        int nextFreeTime = 0;
+        int earn = 0;
+        int distance = 0;
+        string details = "";
+        Taxi* bookedTaxi = nullptr;
+
+        for (auto it : freeTaxies) {
+            distance = abs(ppoint - it->currSpot) * 15;
+            if (distance < mini) {
+                nextSpot = dpoint;
+                nextFreeTime = abs(ppoint - dpoint) + ptime;
+                earn = 100 + ((abs(ppoint - dpoint) * 15) - 5) * 10;
+                details = to_string(it->tid) + " " + to_string(pid) + " " + ppoint + " " + dpoint + " " + to_string(ptime) + " " + to_string(earn) + " ";
+                bookedTaxi = it;
+                mini = distance;
+            }
+        }
+        if (bookedTaxi) {
+            cout << "The taxi id " << bookedTaxi->tid << " is booked for passengerId " << pid << endl;
+            bookedTaxi->setDetails(nextSpot, nextFreeTime, bookedTaxi->earnings + earn, details);
+        } else {
+            cout << "No taxi available for booking." << endl;
+        }
+    }
+
+    void book(vector<Taxi>& taxies) {
+        int picktime;
+        char pickpoint;
+        char droppoint;
+
+        cout << "Enter your pickpoint, droppoint, picktime :" << endl;
+        cin >> pickpoint;
+        cout << "pickpoint entered: " << pickpoint << endl;
+        cin >> droppoint;
+        cout << "droppoint entered: " << droppoint << endl;
+        cin >> picktime;
+        cout << "picktime is " << picktime << endl;
+
+        vector<Taxi*> freeTaxies = getFreetaxies(picktime, pickpoint, droppoint, taxies);
+        sort(freeTaxies.begin(), freeTaxies.end(), [](Taxi* t1, Taxi* t2) {
+            return t1->earnings < t2->earnings;
+        });
+        bookTaxi(pickpoint, droppoint, picktime, freeTaxies);
+    }
+};
+
+int main() {
+    vector<Taxi> taxies;
+    for (int i = 1; i <= 4; i++) {
+        Taxi t;
+        taxies.push_back(t);
+    }
+    int passengerId = 0;
+    while (true) {
+        cout << "1.Book" << " " << "2.Details" << " " << "3.Exit" << endl;
+        int choice;
+        cin >> choice;
+        switch (choice) {
+        case 1: {
+            Booking b(passengerId++);
+            b.book(taxies);
+            break;
+        }
+        case 2: {
+            for (auto& it : taxies) {
+                it.taxiDetails();
+                cout << endl;
+            }
+            break;
+        }
+        case 3:
+            cout << "Exiting......!" << endl;
+            return 0;
+
+        default:
+            cout << "Choose the Correct choice....!" << endl;
+            break;
+        }
+    }
+    return 0;
+}
